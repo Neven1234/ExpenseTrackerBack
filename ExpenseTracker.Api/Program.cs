@@ -7,6 +7,7 @@ using ExpenseTracker.Application.Abstractions.Persistence;
 using ExpenseTracker.Application.Abstractions.Security;
 using ExpenseTracker.Application.Interfaces;
 using ExpenseTracker.Application.Services;
+using ExpenseTracker.Domain.Entities;
 using ExpenseTracker.Infrastructure.Persistence;
 using ExpenseTracker.Infrastructure.Persistence.Repositories;
 using ExpenseTracker.Infrastructure.Security;
@@ -28,10 +29,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IMonthlyBudgetRepository, MonthlyBudgetRepository>();
-builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
+builder.Services.AddScoped<IRepository<User>, Repository<User>>();
+builder.Services.AddScoped<IRepository<Category>, Repository<Category>>();
+builder.Services.AddScoped<IRepository<MonthlyBudget>, Repository<MonthlyBudget>>();
+builder.Services.AddScoped<IRepository<Expense>, Repository<Expense>>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();

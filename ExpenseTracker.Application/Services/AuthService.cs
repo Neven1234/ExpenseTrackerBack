@@ -9,13 +9,13 @@ namespace ExpenseTracker.Application.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly IUserRepository _users;
+    private readonly IRepository<User> _users;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenGenerator _tokenGenerator;
 
     public AuthService(
-        IUserRepository users,
+        IRepository<User> users,
         IUnitOfWork unitOfWork,
         IPasswordHasher passwordHasher,
         ITokenGenerator tokenGenerator)
@@ -30,7 +30,7 @@ public class AuthService : IAuthService
     {
         var email = request.Email.Trim().ToLowerInvariant();
 
-        if (await _users.EmailExistsAsync(email, cancellationToken))
+        if (await _users.AnyAsync(user => user.Email == email))
             throw new ConflictException("An account with this email already exists.");
 
         var user = new User
@@ -51,7 +51,7 @@ public class AuthService : IAuthService
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
         var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _users.GetByEmailAsync(email, cancellationToken);
+        var user = await _users.GetAsync(user => user.Email == email);
 
         if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new InvalidCredentialsException();
