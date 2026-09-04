@@ -1,7 +1,7 @@
 using ExpenseTracker.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace ExpenseTracker.Application.Persistence;
+namespace ExpenseTracker.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {

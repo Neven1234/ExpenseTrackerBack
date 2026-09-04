@@ -1,43 +1,37 @@
+using ExpenseTracker.Application.Abstractions.Persistence;
 using ExpenseTracker.Application.Abstractions.Security;
 using ExpenseTracker.Application.DTOs.Expenses;
 using ExpenseTracker.Application.Mapping;
-using ExpenseTracker.Application.Persistence;
 using ExpenseTracker.Domain.Entities;
 using ExpenseTracker.Domain.Exceptions;
-using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Application.Services;
 
 public class ExpenseService
 {
-    private readonly AppDbContext _dbContext;
+    private readonly IExpenseRepository _expenses;
+    private readonly ICategoryRepository _categories;
+    private readonly IMonthlyBudgetRepository _budgets;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _currentUser;
 
-    public ExpenseService(AppDbContext dbContext, ICurrentUser currentUser)
+    public ExpenseService(
+        IExpenseRepository expenses,
+        ICategoryRepository categories,
+        IMonthlyBudgetRepository budgets,
+        IUnitOfWork unitOfWork,
+        ICurrentUser currentUser)
     {
-        _dbContext = dbContext;
+        _expenses = expenses;
+        _categories = categories;
+        _budgets = budgets;
+        _unitOfWork = unitOfWork;
         _currentUser = currentUser;
     }
 
     public async Task<IReadOnlyList<ExpenseResponse>> ListAsync(int? year, int? month, Guid? categoryId, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Expenses.AsNoTracking()
-            .Include(expense => expense.Category)
-            .Where(expense => expense.MonthlyBudget.UserId == _currentUser.Id);
-
-        if (year.HasValue)
-            query = query.Where(expense => expense.MonthlyBudget.Year == year.Value);
-
-        if (month.HasValue)
-            query = query.Where(expense => expense.MonthlyBudget.Month == month.Value);
-
-        if (categoryId.HasValue)
-            query = query.Where(expense => expense.CategoryId == categoryId.Value);
-
-        var expenses = await query
-            .OrderByDescending(expense => expense.SpentOn)
-            .ToListAsync(cancellationToken);
-
+        var expenses = await _expenses.ListForUserAsync(_currentUser.Id, year, month, categoryId, cancellationToken);
         return expenses.Select(expense => expense.ToResponse()).ToList();
     }
 
@@ -62,8 +56,8 @@ public class ExpenseService
             SpentOn = request.SpentOn
         };
 
-        _dbContext.Expenses.Add(expense);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        _expenses.Add(expense);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return expense.ToResponse(category.Name);
     }
@@ -80,7 +74,8 @@ public class ExpenseService
         expense.Note = request.Note.Trim();
         expense.SpentOn = request.SpentOn;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        _expenses.Update(expense);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return expense.ToResponse(category.Name);
     }
@@ -89,33 +84,25 @@ public class ExpenseService
     {
         var expense = await FindOrThrowAsync(id, cancellationToken);
 
-        _dbContext.Expenses.Remove(expense);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        _expenses.Remove(expense);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<Expense> FindOrThrowAsync(Guid id, CancellationToken cancellationToken)
     {
-        return await _dbContext.Expenses
-                   .Include(expense => expense.Category)
-                   .FirstOrDefaultAsync(
-                       expense => expense.Id == id && expense.MonthlyBudget.UserId == _currentUser.Id,
-                       cancellationToken)
-               ?? throw new NotFoundException("Expense");
+        return await _expenses.GetForUserAsync(id, _currentUser.Id, cancellationToken)
+            ?? throw new NotFoundException("Expense");
     }
 
     private async Task<Category> FindCategoryOrThrowAsync(Guid categoryId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Categories.AsNoTracking()
-                   .FirstOrDefaultAsync(category => category.Id == categoryId && category.UserId == _currentUser.Id, cancellationToken)
-               ?? throw new NotFoundException("Category");
+        return await _categories.GetForUserAsync(categoryId, _currentUser.Id, cancellationToken)
+            ?? throw new NotFoundException("Category");
     }
 
     private async Task<MonthlyBudget> FindBudgetOrThrowAsync(DateOnly spentOn, CancellationToken cancellationToken)
     {
-        return await _dbContext.MonthlyBudgets.AsNoTracking()
-                   .FirstOrDefaultAsync(
-                       budget => budget.UserId == _currentUser.Id && budget.Year == spentOn.Year && budget.Month == spentOn.Month,
-                       cancellationToken)
-               ?? throw new NotFoundException($"Budget for {spentOn.Year}-{spentOn.Month:00}");
+        return await _budgets.GetForUserAsync(_currentUser.Id, spentOn.Year, spentOn.Month, cancellationToken)
+            ?? throw new NotFoundException($"Budget for {spentOn.Year}-{spentOn.Month:00}");
     }
 }

@@ -2,7 +2,7 @@ using ExpenseTracker.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace ExpenseTracker.Application.Persistence.Configurations;
+namespace ExpenseTracker.Infrastructure.Persistence.Configurations;
 
 public class ExpenseConfiguration : IEntityTypeConfiguration<Expense>
 {
