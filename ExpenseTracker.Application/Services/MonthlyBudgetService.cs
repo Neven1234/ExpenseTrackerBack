@@ -1,6 +1,7 @@
 using ExpenseTracker.Application.Abstractions.Persistence;
 using ExpenseTracker.Application.Abstractions.Security;
 using ExpenseTracker.Application.DTOs.Budgets;
+using ExpenseTracker.Application.Interfaces;
 using ExpenseTracker.Application.Mapping;
 using ExpenseTracker.Domain.Budgeting;
 using ExpenseTracker.Domain.Entities;
@@ -8,7 +9,7 @@ using ExpenseTracker.Domain.Exceptions;
 
 namespace ExpenseTracker.Application.Services;
 
-public class MonthlyBudgetService
+public class MonthlyBudgetService : IMonthlyBudgetService
 {
     private readonly IMonthlyBudgetRepository _budgets;
     private readonly IUnitOfWork _unitOfWork;

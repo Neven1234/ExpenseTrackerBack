@@ -1,5 +1,5 @@
 using ExpenseTracker.Application.DTOs.Expenses;
-using ExpenseTracker.Application.Services;
+using ExpenseTracker.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +10,9 @@ namespace ExpenseTracker.Api.Controllers;
 [Route("api/[controller]")]
 public class ExpensesController : ControllerBase
 {
-    private readonly ExpenseService _expenseService;
+    private readonly IExpenseService _expenseService;
 
-    public ExpensesController(ExpenseService expenseService)
+    public ExpensesController(IExpenseService expenseService)
     {
         _expenseService = expenseService;
     }

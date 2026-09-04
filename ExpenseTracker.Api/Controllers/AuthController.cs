@@ -1,5 +1,5 @@
 using ExpenseTracker.Application.DTOs.Auth;
-using ExpenseTracker.Application.Services;
+using ExpenseTracker.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseTracker.Api.Controllers;
@@ -8,9 +8,9 @@ namespace ExpenseTracker.Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
 
-    public AuthController(AuthService authService)
+    public AuthController(IAuthService authService)
     {
         _authService = authService;
     }

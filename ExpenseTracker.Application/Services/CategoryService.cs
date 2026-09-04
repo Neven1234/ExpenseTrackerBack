@@ -1,13 +1,14 @@
 using ExpenseTracker.Application.Abstractions.Persistence;
 using ExpenseTracker.Application.Abstractions.Security;
 using ExpenseTracker.Application.DTOs.Categories;
+using ExpenseTracker.Application.Interfaces;
 using ExpenseTracker.Application.Mapping;
 using ExpenseTracker.Domain.Entities;
 using ExpenseTracker.Domain.Exceptions;
 
 namespace ExpenseTracker.Application.Services;
 
-public class CategoryService
+public class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository _categories;
     private readonly IUnitOfWork _unitOfWork;

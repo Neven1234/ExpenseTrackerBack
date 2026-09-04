@@ -1,5 +1,5 @@
 using ExpenseTracker.Application.DTOs.Budgets;
-using ExpenseTracker.Application.Services;
+using ExpenseTracker.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +10,9 @@ namespace ExpenseTracker.Api.Controllers;
 [Route("api/[controller]")]
 public class BudgetsController : ControllerBase
 {
-    private readonly MonthlyBudgetService _budgetService;
+    private readonly IMonthlyBudgetService _budgetService;
 
-    public BudgetsController(MonthlyBudgetService budgetService)
+    public BudgetsController(IMonthlyBudgetService budgetService)
     {
         _budgetService = budgetService;
     }

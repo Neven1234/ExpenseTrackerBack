@@ -1,12 +1,13 @@
 using ExpenseTracker.Application.Abstractions.Persistence;
 using ExpenseTracker.Application.Abstractions.Security;
 using ExpenseTracker.Application.DTOs.Auth;
+using ExpenseTracker.Application.Interfaces;
 using ExpenseTracker.Domain.Entities;
 using ExpenseTracker.Domain.Exceptions;
 
 namespace ExpenseTracker.Application.Services;
 
-public class AuthService
+public class AuthService : IAuthService
 {
     private readonly IUserRepository _users;
     private readonly IUnitOfWork _unitOfWork;
