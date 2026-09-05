@@ -43,7 +43,7 @@ dotnet ef database update --project ExpenseTracker.Infrastructure --startup-proj
 dotnet run --project ExpenseTracker.Api
 ```
 
-API documentation is served at `/scalar` in Development.
+Swagger UI is served at `/swagger` in Development.
 
 The connection string lives in `ExpenseTracker.Api/appsettings.json` and points at
 `(localdb)\MSSQLLocalDB`. Swap the provider in
