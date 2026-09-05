@@ -24,9 +24,14 @@ public class BudgetsController : ControllerBase
     }
 
     [HttpGet("{year:int}/{month:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult<MonthlyBudgetSummaryResponse>> GetByMonth(int year, int month, CancellationToken cancellationToken)
     {
-        return Ok(await _budgetService.GetAsync(year, month, cancellationToken));
+        var summary = await _budgetService.GetAsync(year, month, cancellationToken);
+
+        // No budget for that month yet is an empty result, not a missing resource.
+        return summary is null ? NoContent() : Ok(summary);
     }
 
     [HttpPost]

@@ -34,12 +34,16 @@ public class MonthlyBudgetService : IMonthlyBudgetService
         return BudgetLedger.Accumulate(budgets).Select(balance => balance.ToResponse()).ToList();
     }
 
-    public async Task<MonthlyBudgetSummaryResponse> GetAsync(int year, int month, CancellationToken cancellationToken = default)
+    // A month the user has not budgeted for yet is a normal empty state, not an error.
+    public async Task<MonthlyBudgetSummaryResponse?> GetAsync(int year, int month, CancellationToken cancellationToken = default)
     {
-        var balance = await GetBalanceOrThrowAsync(year, month);
+        var balance = await GetBalanceAsync(year, month);
+
+        if (balance is null)
+            return null;
 
         var spendingByCategory = balance.Budget.Expenses
-            .GroupBy(expense => new { expense.CategoryId, Name = expense.Category.Name })
+            .GroupBy(expense => new { expense.CategoryId, Name = expense.Category?.Name ?? string.Empty })
             .Select(group => new CategorySpendResponse(group.Key.CategoryId, group.Key.Name, group.Sum(expense => expense.Amount)))
             .OrderByDescending(category => category.Amount)
             .ToList();
@@ -102,7 +106,8 @@ public class MonthlyBudgetService : IMonthlyBudgetService
                ?? throw new NotFoundException($"Budget for {year}-{month:00}");
     }
 
-    private async Task<BudgetBalance> GetBalanceOrThrowAsync(int year, int month)
+    // Every month up to the requested one is loaded so the carry-over accumulates correctly.
+    private async Task<BudgetBalance?> GetBalanceAsync(int year, int month)
     {
         var budgets = await _budgets.GetAllAsync(
             budget => budget.UserId == _currentUser.Id
@@ -111,8 +116,14 @@ public class MonthlyBudgetService : IMonthlyBudgetService
             ExpenseCategoryInclude);
 
         return BudgetLedger.Accumulate(budgets)
-                   .LastOrDefault(balance => balance.Budget.Year == year && balance.Budget.Month == month)
-               ?? throw new NotFoundException($"Budget for {year}-{month:00}");
+            .LastOrDefault(balance => balance.Budget.Year == year && balance.Budget.Month == month);
+    }
+
+    // Only for callers that just saved the budget, where a missing balance means the write went wrong.
+    private async Task<BudgetBalance> GetBalanceOrThrowAsync(int year, int month)
+    {
+        return await GetBalanceAsync(year, month)
+            ?? throw new NotFoundException($"Budget for {year}-{month:00}");
     }
 
     private static IOrderedQueryable<MonthlyBudget> OrderByMonth(IQueryable<MonthlyBudget> budgets) =>

@@ -20,6 +20,11 @@ public class ExceptionHandlingMiddleware
         {
             await _next(context);
         }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+        {
+            // The client gave up on the request; there is nobody left to write a response to.
+            _logger.LogInformation("Request to {Path} was cancelled by the client.", context.Request.Path);
+        }
         catch (Exception exception)
         {
             await WriteProblemDetailsAsync(context, exception);
@@ -32,6 +37,13 @@ public class ExceptionHandlingMiddleware
 
         if (statusCode == StatusCodes.Status500InternalServerError)
             _logger.LogError(exception, "Unhandled exception while processing {Path}", context.Request.Path);
+
+        // Headers are already on the wire, so the status code can no longer be changed.
+        if (context.Response.HasStarted)
+        {
+            _logger.LogWarning(exception, "Response for {Path} had already started; no problem details written.", context.Request.Path);
+            return;
+        }
 
         var problemDetails = new ProblemDetails
         {
