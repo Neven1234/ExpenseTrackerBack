@@ -23,7 +23,7 @@ public class BudgetsController : ControllerBase
         return Ok(await _budgetService.ListAsync(cancellationToken));
     }
 
-    [HttpGet("{year:int}/{month:int}")]
+    [HttpGet("{year:int:range(2000,2100)}/{month:int:range(1,12)}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult<MonthlyBudgetSummaryResponse>> GetByMonth(int year, int month, CancellationToken cancellationToken)
@@ -41,13 +41,13 @@ public class BudgetsController : ControllerBase
         return CreatedAtAction(nameof(GetByMonth), new { year = budget.Year, month = budget.Month }, budget);
     }
 
-    [HttpPut("{year:int}/{month:int}")]
+    [HttpPut("{year:int:range(2000,2100)}/{month:int:range(1,12)}")]
     public async Task<ActionResult<MonthlyBudgetResponse>> Update(int year, int month, UpdateMonthlyBudgetRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _budgetService.UpdateAsync(year, month, request, cancellationToken));
     }
 
-    [HttpDelete("{year:int}/{month:int}")]
+    [HttpDelete("{year:int:range(2000,2100)}/{month:int:range(1,12)}")]
     public async Task<IActionResult> Delete(int year, int month, CancellationToken cancellationToken)
     {
         await _budgetService.DeleteAsync(year, month, cancellationToken);
